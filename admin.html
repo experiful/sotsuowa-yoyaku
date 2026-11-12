@@ -128,7 +128,7 @@ td,th{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;vertic
     <div id="t_manual" hidden>
       <div class="card">
         <b>予約を手動で登録</b>
-        <p class="help">SelectTypeからの移し替えや、電話・メールでの予約に使います。登録すると「確定」になり、その枠はWebから申し込めなくなります。受付期間（30日前〜180日後）や曜日の制限はかかりません。</p>
+        <p class="help">SelectTypeからの移し替えや、電話・メールでの予約に使います。登録すると「確定」になり、その枠はWebから申し込めなくなります。受付期間（10日後〜180日後）や曜日の制限はかかりません。</p>
         <div class="grid2">
           <div><label for="m_date">公演日</label><input type="date" id="m_date"></div>
           <div><label for="m_slot">枠</label>
@@ -302,7 +302,7 @@ function renderCalDetail(act, clo){
   });
   if (!b && !cl.length) {
     h += '<div class="card"><div class="dt">' + esc(fmtJa(ds)) + ' ' + slotLong(sl) + '　空き</div>' +
-      '<div class="meta">' + (ds < data.first ? '受付終了（30日前を過ぎています）' : ds > data.last ? '受付開始前' : 'Webで受付中') + '</div>' +
+      '<div class="meta">' + (ds < data.first ? '受付終了（締切を過ぎています）' : ds > data.last ? '受付開始前' : 'Webで受付中') + '</div>' +
       '<div class="acts"><button class="btn sm" data-go="close" data-d="' + ds + '" data-s="' + sl + '">この枠を受付停止にする</button>' +
       '<button class="btn sm" data-go="manual" data-d="' + ds + '" data-s="' + sl + '">この枠に予約を手動登録</button></div></div>';
   }

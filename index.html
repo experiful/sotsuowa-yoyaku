@@ -398,7 +398,7 @@ function demoAvailability(){
     if (w !== 0 && w !== 6) continue;
     var diff = n - t, s = {};
     ['AM','PM'].forEach(function(sl, i){
-      s[sl] = diff > 180 ? 'soon' : diff < 30 ? 'ended' : ((n + i) % 5 === 0 ? 'ng' : 'open');
+      s[sl] = diff > 180 ? 'soon' : diff < 10 ? 'ended' : ((n + i) % 5 === 0 ? 'ng' : 'open');
     });
     var x = { d: d, w: w, h: '', s: s };
     if (diff > 180) x.release = ymd(n - 180);
