@@ -213,9 +213,9 @@ document.addEventListener('click', function(e){
     if (r === null) return;
     p = { action: 'reject', id: id, reason: r }; done = 'お断りにしました（メールを送りました）。枠は受付中に戻りました。SelectTypeで他公演を止めていた場合は再開してください';
   } else if (a === 'cancel') {
-    var c = prompt(bk.dateJa + ' ' + bk.slotJa + ' ' + bk.name + ' 様の予約をキャンセルにします（お客様へのメールは送りません）。\n理由のメモ（任意）', '');
+    var c = prompt(bk.dateJa + ' ' + bk.slotJa + ' ' + bk.name + ' 様の予約をキャンセルにし、お客様にキャンセルのお知らせメールを送ります。\n理由のメモ（任意）', '');
     if (c === null) return;
-    p = { action: 'cancel', id: id, reason: c }; done = 'キャンセルにしました。枠は受付中に戻りました。お客様への連絡と、SelectTypeで他公演を止めていた場合の再開をお願いします';
+    p = { action: 'cancel', id: id, reason: c }; done = 'キャンセルにしました（キャンセルのメールを送りました）。枠は受付中に戻りました。SelectTypeで他公演を止めていた場合は再開してください';
   } else if (a === 'unclose') {
     if (!confirm('この受付停止を解除して、受付を再開しますか？')) return;
     p = { action: 'removeClosure', id: id }; done = '受付停止を解除しました';

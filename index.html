@@ -125,13 +125,13 @@ footer{text-align:center;color:var(--mute);font-size:12px;margin-top:30px}
   <section class="card">
     <h2>ご予約について <small>RULES</small></h2>
     <ul class="rules">
-      <li>公演日は<b>土・日・祝日</b>。1日2回（<b>10:00〜15:00</b>／<b>17:00〜22:00</b>）です。</li>
-      <li>ご予約は<b>公演日の30日前まで</b>。<b>毎日0時</b>に、180日後の日程の受付を開始します。</li>
-      <li>リクエスト制です。お申し込み後、当店で確認し「予約確定」のメールをお送りした時点で確定となります。</li>
+      <li>貸切予約受付日時はカレンダーで受付中の日時のみとなります。</li>
+      <li>毎日0時に、180日後の日程の受付を開始します。</li>
+      <li>予約お申し込み後、予約確定のメールが届くまでは予約が完了されません。</li>
       <li>お申し込みが入った枠は、その時点でほかの方はお申し込みいただけません（先着順）。</li>
-      <li>開場受付は開始時刻の10分前からです。</li>
+      <li>質問等ございましたら、<a href="https://tanteicamp.experiful.jp/contact/" target="_blank" rel="noopener">【お問い合わせ】</a>までご連絡ください。</li>
+      <li>公演の詳しい内容は <a href="https://tanteicamp.experiful.jp/event/sotsuowa/" target="_blank" rel="noopener">公式サイト</a> をご覧ください。</li>
     </ul>
-    <p style="margin:10px 0 0;font-size:13px">公演の詳しい内容は <a href="https://tanteicamp.experiful.jp/event/sotsuowa/" target="_blank" rel="noopener">公式サイト</a> をご覧ください。</p>
   </section>
 
   <div class="steps" aria-label="お申し込みの流れ">
@@ -169,12 +169,19 @@ footer{text-align:center;color:var(--mute);font-size:12px;margin-top:30px}
       <div class="count"><span id="noteCount">0</span>／150字</div>
       <div class="hp" aria-hidden="true"><label>website<input type="text" id="website" tabindex="-1" autocomplete="off"></label></div>
       <div class="policy">
-        <b>キャンセルポリシー</b><br>
-        前日・当日のキャンセルは100％のキャンセル料がかかります。お客様の前日・当日のキャンセルまたは無断キャンセルにより公演が中止になった場合は、参加者全員分の参加費をお支払いいただきます。<br>
-        天候不良や急病など、主催者側のやむを得ない都合により公演が中止となる場合がございます。
+        <b>注意事項</b><br>
+        ・開場受付は開始時刻の10分前からとなります。<br>
+        ・万が一、遅刻される場合は必ずご連絡ください。<br>
+        ・当公演はゲームマスター（GM）ありの公演です。進行はGMの指示に従ってください。<br>
+        ・蓋付きの飲み物の持ち込みはOKです（食べ物の持ち込みはご遠慮ください）。<br>
+        <b style="display:block;margin-top:8px">キャンセルポリシー</b>
+        ・公演日の7日前まで：キャンセル手数料不要<br>
+        ・公演日の2日前まで：公演価格の30％をキャンセル手数料として徴収<br>
+        ・公演日の前日および当日：公演価格の100％をキャンセル手数料として徴収<br>
+        ※お客様の前日・当日のキャンセルまたは無断キャンセルにより公演が中止になった場合は、参加者全員分の参加費をお支払いいただきます。
       </div>
       <p style="font-size:12px;margin:10px 0 0;color:#5a4a30">ご入力いただいた個人情報は、このご予約に関するご連絡のためだけに使用します。</p>
-      <label class="agree"><input type="checkbox" id="agree"><span>キャンセルポリシーと、料金が当日現地払い（キャッシュレスのみ）であることに同意します</span></label>
+      <label class="agree"><input type="checkbox" id="agree"><span>注意事項・キャンセルポリシーと、料金が当日現地払い（キャッシュレスのみ）であることに同意します</span></label>
       <div class="row2">
         <button class="btn" type="button" id="back2">日時を選び直す</button>
         <button class="btn primary" type="submit">確認へ進む</button>
@@ -334,7 +341,7 @@ $('form').onsubmit = function(e){
   else if (!/^0\d{9,10}$/.test(normTel(f.tel))) err = '電話番号を正しく入力してください（例：090-1234-5678）';
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) err = 'メールアドレスを正しく入力してください';
   else if (f.note.length > 150) err = 'ご質問・要望は150文字以内で入力してください';
-  else if (!$('agree').checked) err = 'キャンセルポリシーへの同意にチェックを入れてください';
+  else if (!$('agree').checked) err = '注意事項・キャンセルポリシーへの同意にチェックを入れてください';
   showErr('s2err', err);
   if (err) return;
   state.form = f;
