@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>そつおわ貸切予約 管理画面</title>
+<style>
+:root{--navy:#0b1026;--navy2:#151d40;--navy3:#1d2754;--gold:#d4b26a;--gold2:#f4e4b8;--ink:#ece6d6;--mute:#aeaabb;--line:rgba(212,178,106,.3);--wine:#a8384a;--green:#4f9a6a}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--navy);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sans-serif;font-size:15px;line-height:1.6}
+.wrap{max-width:900px;margin:0 auto;padding:16px 16px 60px}
+h1{font-size:18px;color:var(--gold2);margin:6px 0 14px;letter-spacing:.06em}
+.btn{appearance:none;font:inherit;cursor:pointer;min-height:44px;padding:8px 16px;border-radius:6px;border:1px solid var(--gold);background:transparent;color:var(--gold2)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.ok{background:var(--green);border-color:var(--green);color:#fff;font-weight:700}
+.btn.ng{background:transparent;border-color:var(--wine);color:#ffb8c3}
+.btn.pri{background:var(--gold);color:#1a1408;font-weight:700}
+.btn.sm{min-height:36px;padding:4px 12px;font-size:14px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px}
+.tabs button{appearance:none;font:inherit;min-height:44px;padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--mute);cursor:pointer}
+.tabs button.on{background:var(--gold);color:#1a1408;border-color:var(--gold);font-weight:700}
+.tabs .badge{display:inline-block;min-width:20px;padding:0 6px;margin-left:4px;border-radius:999px;background:var(--wine);color:#fff;font-size:12px}
+.card{background:var(--navy2);border:1px solid var(--line);border-radius:8px;padding:14px;margin:10px 0}
+.card .dt{font-size:17px;font-weight:700;color:var(--gold2)}
+.card .meta{color:var(--mute);font-size:13px}
+.card .who{margin:6px 0}
+.card .note{white-space:pre-wrap;background:rgba(0,0,0,.25);padding:6px 8px;border-radius:4px;font-size:14px;margin:6px 0}
+.card .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:999px;border:1px solid var(--line);margin-right:6px}
+.tag.p{background:#7a5a10;border-color:#c99a2e;color:#fff}
+.tag.o{background:#24573a;border-color:#4f9a6a;color:#fff}
+.tag.x{color:var(--mute)}
+.tag.warn{background:var(--wine);border-color:var(--wine);color:#fff}
+label{display:block;margin:10px 0 4px;font-size:14px;color:var(--gold2)}
+input[type=text],input[type=tel],input[type=email],input[type=date],input[type=password],select,textarea{width:100%;font:inherit;font-size:16px;padding:9px 10px;border-radius:6px;border:1px solid var(--line);background:#0f1636;color:var(--ink)}
+textarea{min-height:70px}
+.chk{display:flex;gap:8px;align-items:center;margin:10px 0}
+.chk input{width:22px;height:22px}
+.msg{padding:10px 12px;border-radius:6px;margin:10px 0;font-size:14px}
+.msg.e{background:#5a1420;border:1px solid #c0596a}
+.msg.i{background:#173a28;border:1px solid #4f9a6a}
+.msg.w{background:#4a3a0a;border:1px solid #c99a2e}
+.empty{color:var(--mute);padding:16px 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td,th{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;vertical-align:top}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.help{font-size:13px;color:var(--mute)}
+@media (max-width:520px){.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>そつおわ 貸切予約 管理</h1>
+    <div><button class="btn sm" id="reload" hidden>更新</button> <button class="btn sm" id="logout" hidden>ログアウト</button></div>
+  </div>
+  <div id="msg"></div>
+
+  <section id="login" class="card">
+    <label for="pw">管理パスワード</label>
+    <input type="password" id="pw" autocomplete="current-password">
+    <div style="margin-top:12px"><button class="btn pri" id="loginBtn">ログイン</button></div>
+  </section>
+
+  <section id="main" hidden>
+    <div class="tabs" id="tabs">
+      <button data-t="pending" class="on">承認待ち<span class="badge" id="pcount">0</span></button>
+      <button data-t="list">予約一覧</button>
+      <button data-t="close">受付停止</button>
+      <button data-t="manual">手動登録</button>
+    </div>
+
+    <div id="t_pending"></div>
+    <div id="t_list" hidden></div>
+
+    <div id="t_close" hidden>
+      <div class="card">
+        <b>受付停止を追加</b>（臨時休業・他公演の予約など）
+        <div class="grid2">
+          <div><label for="c_date">日付</label><input type="date" id="c_date"></div>
+          <div><label for="c_slot">枠</label>
+            <select id="c_slot"><option value="ALL">終日</option><option value="AM">10:00〜15:00</option><option value="PM">17:00〜22:00</option></select></div>
+        </div>
+        <label for="c_reason">理由</label><input type="text" id="c_reason" maxlength="100" placeholder="臨時休業／夜明ケヨリモ向コウ側の予約 など">
+        <div style="margin-top:12px"><button class="btn pri" id="addClose">受付停止にする</button></div>
+      </div>
+      <div id="closeList"></div>
+    </div>
+
+    <div id="t_manual" hidden>
+      <div class="card">
+        <b>予約を手動で登録</b>
+        <p class="help">SelectTypeからの移し替えや、電話・メールでの予約に使います。登録すると「確定」になり、その枠はWebから申し込めなくなります。受付期間（30日前〜180日後）や曜日の制限はかかりません。</p>
+        <div class="grid2">
+          <div><label for="m_date">公演日</label><input type="date" id="m_date"></div>
+          <div><label for="m_slot">枠</label>
+            <select id="m_slot"><option value="AM">10:00〜15:00</option><option value="PM">17:00〜22:00</option></select></div>
+        </div>
+        <label for="m_name">お名前（必須）</label><input type="text" id="m_name" maxlength="50">
+        <div class="grid2">
+          <div><label for="m_tel">電話番号</label><input type="tel" id="m_tel" maxlength="20"></div>
+          <div><label for="m_email">メールアドレス</label><input type="email" id="m_email" maxlength="254"></div>
+        </div>
+        <label for="m_note">ご質問・要望</label><textarea id="m_note" maxlength="150"></textarea>
+        <label for="m_memo">社内メモ</label><input type="text" id="m_memo" maxlength="300" placeholder="SelectTypeから移行 など">
+        <div class="chk"><input type="checkbox" id="m_mail"><label for="m_mail" style="margin:0;color:var(--ink)">お客様に「予約確定」メールを送る</label></div>
+        <div class="chk"><input type="checkbox" id="m_force"><label for="m_force" style="margin:0;color:var(--ink)">受付停止中の枠でも登録する</label></div>
+        <button class="btn pri" id="addManual">登録する</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+// ▼ GASのWebアプリURL（index.html と同じもの）
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbx7URwFuGQt7MmmKHmRh23OjbSyJg1ENXX_cR8HVNRiUWT8Mlnq-EVjE4Ol1gcZzyUY/exec';
+
+var data = null, pw = '';
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function msg(text, kind){ $('msg').innerHTML = text ? '<div class="msg ' + (kind || 'i') + '">' + esc(text) + '</div>' : ''; if (text) window.scrollTo(0, 0); }
+function ssGet(k){ try { return sessionStorage.getItem(k) || ''; } catch (e) { return ''; } }
+function ssSet(k, v){ try { if (v) sessionStorage.setItem(k, v); else sessionStorage.removeItem(k); } catch (e) {} }
+
+function api(body){
+  if (!GAS_URL) return Promise.reject(new Error('GAS_URL が未設定です'));
+  body.password = pw;
+  return fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if (res && res.auth === false) { logout(); }
+      if (!res || !res.ok) { var e = new Error((res && res.error) || 'エラーが起きました'); e.needForce = !!(res && res.needForce); throw e; }
+      return res;
+    });
+}
+
+function refresh(){
+  return api({ action: 'adminList' }).then(function(res){
+    data = res;
+    $('login').hidden = true; $('main').hidden = false; $('reload').hidden = false; $('logout').hidden = false;
+    renderAll();
+  });
+}
+function logout(){ pw = ''; ssSet('sotsuowaPw', ''); $('login').hidden = false; $('main').hidden = true; $('reload').hidden = true; $('logout').hidden = true; }
+
+$('loginBtn').onclick = function(){
+  pw = $('pw').value;
+  if (!pw) return;
+  $('loginBtn').disabled = true;
+  refresh().then(function(){ ssSet('sotsuowaPw', pw); msg(''); })
+    .catch(function(e){ msg(e.message, 'e'); pw = ''; })
+    .then(function(){ $('loginBtn').disabled = false; });
+};
+$('pw').onkeydown = function(e){ if (e.key === 'Enter') $('loginBtn').click(); };
+$('logout').onclick = logout;
+$('reload').onclick = function(){ refresh().then(function(){ msg('最新にしました'); }).catch(function(e){ msg(e.message, 'e'); }); };
+
+$('tabs').onclick = function(e){
+  var b = e.target.closest('button'); if (!b) return;
+  var t = b.getAttribute('data-t');
+  Array.prototype.forEach.call(this.children, function(x){ x.classList.toggle('on', x === b); });
+  ['pending','list','close','manual'].forEach(function(k){ $('t_' + k).hidden = k !== t; });
+};
+
+function tagOf(s){ return '<span class="tag ' + (s === '承認待ち' ? 'p' : s === '確定' ? 'o' : 'x') + '">' + esc(s) + '</span>'; }
+function bookingCard(b, acts){
+  return '<div class="card"><div class="dt">' + esc(b.dateJa) + ' ' + esc(b.slotJa) + '</div>' +
+    '<div class="meta">' + tagOf(b.status) + esc(b.id) + '／受付 ' + esc(b.created) + '／' + esc(b.source) + '</div>' +
+    '<div class="who"><b>' + esc(b.name) + ' 様</b>　' + esc(b.tel) + '　' + (b.email ? '<a href="mailto:' + esc(b.email) + '" style="color:var(--gold2)">' + esc(b.email) + '</a>' : '') + '</div>' +
+    (b.note ? '<div class="note">' + esc(b.note) + '</div>' : '') +
+    (b.memo ? '<div class="meta">メモ：' + esc(b.memo) + '</div>' : '') +
+    (b.closedBy ? '<div class="meta"><span class="tag warn">受付停止と重なっています</span>' + esc(b.closedBy) + '</div>' : '') +
+    (acts || '') + '</div>';
+}
+
+function renderAll(){
+  var pend = data.bookings.filter(function(b){ return b.status === '承認待ち'; });
+  $('pcount').textContent = pend.length;
+  $('t_pending').innerHTML = pend.length ? pend.map(function(b){
+    return bookingCard(b, '<div class="acts"><button class="btn ok" data-a="approve" data-id="' + esc(b.id) + '">承認して確定メールを送る</button>' +
+      '<button class="btn ng" data-a="reject" data-id="' + esc(b.id) + '">お断りする</button></div>');
+  }).join('') : '<div class="empty">承認待ちはありません。</div>';
+
+  var act = data.bookings.filter(function(b){ return b.status === '確定' || b.status === '承認待ち'; });
+  var old = data.bookings.filter(function(b){ return b.status !== '確定' && b.status !== '承認待ち'; });
+  $('t_list').innerHTML = '<p class="help">今日の7日前以降の予約です（全件はスプレッドシートの「予約」シート）。</p>' +
+    (act.length ? act.map(function(b){
+      return bookingCard(b, '<div class="acts"><button class="btn sm ng" data-a="cancel" data-id="' + esc(b.id) + '">キャンセルにする</button></div>');
+    }).join('') : '<div class="empty">予約はありません。</div>') +
+    (old.length ? '<h3 style="color:var(--mute);font-size:14px;margin-top:20px">お断り・キャンセル</h3>' + old.map(function(b){ return bookingCard(b, ''); }).join('') : '');
+
+  $('closeList').innerHTML = data.closures.length ? data.closures.map(function(c){
+    return '<div class="card"><div class="dt">' + esc(c.dateJa) + ' ' + esc(c.slotJa) + '</div>' +
+      '<div class="meta">' + (c.conflict ? '<span class="tag warn">予約と重なっています</span>' : '') + esc(c.reason) + '／' + esc(c.source) + '／登録 ' + esc(c.created) + '</div>' +
+      '<div class="acts"><button class="btn sm" data-a="unclose" data-id="' + esc(c.id) + '">停止を解除</button></div></div>';
+  }).join('') : '<div class="empty">今後の受付停止はありません。</div>';
+}
+
+function busy(btn, on){ if (btn) btn.disabled = on; }
+document.addEventListener('click', function(e){
+  var b = e.target.closest('button[data-a]'); if (!b) return;
+  var a = b.getAttribute('data-a'), id = b.getAttribute('data-id');
+  var bk = data.bookings.filter(function(x){ return x.id === id; })[0];
+  var p = null, done = '';
+  if (a === 'approve') {
+    if (!confirm(bk.dateJa + ' ' + bk.slotJa + '\n' + bk.name + ' 様の予約を確定し、確定メールを送ります。よろしいですか？')) return;
+    p = { action: 'approve', id: id }; done = '確定しました（確定メールを送りました）。SelectTypeの上野・団体貸切で、同じ時間の他公演を受付停止にしてください';
+  } else if (a === 'reject') {
+    var r = prompt(bk.name + ' 様をお断りします。\nお断りメールに添える一言があれば入力してください（空欄でも送れます）', '');
+    if (r === null) return;
+    p = { action: 'reject', id: id, reason: r }; done = 'お断りにしました（メールを送りました）。枠は受付中に戻りました。SelectTypeで他公演を止めていた場合は再開してください';
+  } else if (a === 'cancel') {
+    var c = prompt(bk.dateJa + ' ' + bk.slotJa + ' ' + bk.name + ' 様の予約をキャンセルにします（お客様へのメールは送りません）。\n理由のメモ（任意）', '');
+    if (c === null) return;
+    p = { action: 'cancel', id: id, reason: c }; done = 'キャンセルにしました。枠は受付中に戻りました。お客様への連絡と、SelectTypeで他公演を止めていた場合の再開をお願いします';
+  } else if (a === 'unclose') {
+    if (!confirm('この受付停止を解除して、受付を再開しますか？')) return;
+    p = { action: 'removeClosure', id: id }; done = '受付停止を解除しました';
+  }
+  if (!p) return;
+  busy(b, true);
+  api(p).catch(function(err){
+      if (err.needForce && confirm(err.message + '\n\nそれでも確定しますか？')) { p.force = true; return api(p); }
+      throw err;
+    })
+    .then(function(res){ msg(res.warn || done, res.warn ? 'w' : 'i'); return refresh(); })
+    .catch(function(err){ msg(err.message, 'e'); refresh().catch(function(){}); })
+    .then(function(){ busy(b, false); });
+});
+
+$('addClose').onclick = function(){
+  var b = this, d = $('c_date').value;
+  if (!d) { msg('日付を選んでください', 'e'); return; }
+  busy(b, true);
+  api({ action: 'addClosure', date: d, slot: $('c_slot').value, reason: $('c_reason').value })
+    .then(function(res){ msg(res.warn || '受付停止にしました', res.warn ? 'w' : 'i'); $('c_reason').value = ''; return refresh(); })
+    .catch(function(err){ msg(err.message, 'e'); })
+    .then(function(){ busy(b, false); });
+};
+
+$('addManual').onclick = function(){
+  var b = this;
+  var p = { action: 'addManual', date: $('m_date').value, slot: $('m_slot').value, name: $('m_name').value, tel: $('m_tel').value,
+    email: $('m_email').value, note: $('m_note').value, memo: $('m_memo').value, sendMail: $('m_mail').checked, force: $('m_force').checked };
+  if (!p.date || !p.name) { msg('公演日とお名前は必須です', 'e'); return; }
+  if (p.sendMail && !p.email) { msg('確定メールを送るにはメールアドレスが必要です', 'e'); return; }
+  busy(b, true);
+  api(p).then(function(res){
+    msg(res.warn || ('登録しました（' + res.id + '）。SelectTypeの上野・団体貸切で、同じ時間の他公演を受付停止にしてください'), res.warn ? 'w' : 'i');
+    ['m_name','m_tel','m_email','m_note','m_memo'].forEach(function(k){ $(k).value = ''; });
+    $('m_mail').checked = false; $('m_force').checked = false;
+    return refresh();
+  }).catch(function(err){ msg(err.message, 'e'); })
+    .then(function(){ busy(b, false); });
+};
+
+pw = ssGet('sotsuowaPw');
+if (!GAS_URL) msg('GAS_URL が未設定です（admin.html の GAS_URL にWebアプリのURLを入れてください）', 'w');
+else if (pw) refresh().catch(function(){ logout(); });
+</script>
+</body>
+</html>
