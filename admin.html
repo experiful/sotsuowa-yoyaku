@@ -49,6 +49,31 @@ td,th{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;vertic
 .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .help{font-size:13px;color:var(--mute)}
 @media (max-width:520px){.grid2{grid-template-columns:1fr}}
+.calbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:4px 0 8px}
+.calbar .m{font-size:18px;font-weight:700;color:var(--gold2);white-space:nowrap}
+.legend{font-size:12px;color:var(--mute);margin-bottom:6px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:3px;vertical-align:-1px}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.cal .wh{text-align:center;font-size:12px;color:var(--mute);padding:2px 0}
+.cal .wh.s0{color:#f0a3a3}.cal .wh.s6{color:#a9c2f2}
+.cell{min-height:84px;background:var(--navy2);border:1px solid var(--line);border-radius:5px;padding:3px;font-size:12px;min-width:0}
+.cell.off{background:transparent;border-color:rgba(212,178,106,.12)}
+.cell.off .n{color:#5b6080}
+.cell.blank{background:transparent;border:none}
+.cell.today{box-shadow:0 0 0 2px var(--gold) inset}
+.cell .n{font-weight:700;line-height:1.2}
+.cell .n.s0,.cell .n.hol{color:#f0a3a3}.cell .n.s6{color:#a9c2f2}
+.cell .hn{font-size:10px;color:#f0a3a3;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip{display:block;width:100%;text-align:left;font:inherit;font-size:11px;line-height:1.3;border:none;border-radius:3px;padding:3px 4px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;color:#fff}
+.chip.p,.legend .p{background:#a07414}
+.chip.o,.legend .o{background:#2e6e48}
+.chip.c,.legend .c{background:#4a4f6e;color:#ddd}
+.chip.e,.legend .e{background:transparent;border:1px dashed rgba(212,178,106,.45);color:var(--mute)}
+.chip.sel{outline:2px solid var(--gold2)}
+.chip .st{display:none}
+#calDetail{margin-top:12px}
+@media (max-width:760px){.cell{min-height:74px;padding:2px}.chip{font-size:11px;padding:3px 2px;text-align:center}.chip .lt{display:none}.chip .st{display:inline}.cell .hn{display:none}}
+.calbar .btn{white-space:nowrap}
 </style>
 </head>
 <body>
@@ -68,13 +93,23 @@ td,th{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;vertic
   <section id="main" hidden>
     <div class="tabs" id="tabs">
       <button data-t="pending" class="on">承認待ち<span class="badge" id="pcount">0</span></button>
-      <button data-t="list">予約一覧</button>
+      <button data-t="list">予約カレンダー</button>
       <button data-t="close">受付停止</button>
       <button data-t="manual">手動登録</button>
     </div>
 
     <div id="t_pending"></div>
-    <div id="t_list" hidden></div>
+    <div id="t_list" hidden>
+      <div class="calbar">
+        <button class="btn sm" id="calPrev">‹ 前月</button>
+        <div class="m" id="calLabel"></div>
+        <button class="btn sm" id="calNext">翌月 ›</button>
+      </div>
+      <div class="legend"><span><i class="p"></i>承認待ち</span><span><i class="o"></i>確定</span><span><i class="c"></i>受付停止</span><span><i class="e"></i>空き（公演日）</span></div>
+      <div class="cal" id="cal"></div>
+      <p class="help">枠をタップすると、下に詳しい内容が出ます。お断り・キャンセル済みの予約はスプレッドシートの「予約」シートで見られます。</p>
+      <div id="calDetail"></div>
+    </div>
 
     <div id="t_close" hidden>
       <div class="card">
@@ -184,15 +219,10 @@ function renderAll(){
       '<button class="btn ng" data-a="reject" data-id="' + esc(b.id) + '">お断りする</button></div>');
   }).join('') : '<div class="empty">承認待ちはありません。</div>';
 
-  var act = data.bookings.filter(function(b){ return b.status === '確定' || b.status === '承認待ち'; });
-  var old = data.bookings.filter(function(b){ return b.status !== '確定' && b.status !== '承認待ち'; });
-  $('t_list').innerHTML = '<p class="help">今日の7日前以降の予約です（全件はスプレッドシートの「予約」シート）。</p>' +
-    (act.length ? act.map(function(b){
-      return bookingCard(b, '<div class="acts"><button class="btn sm ng" data-a="cancel" data-id="' + esc(b.id) + '">キャンセルにする</button></div>');
-    }).join('') : '<div class="empty">予約はありません。</div>') +
-    (old.length ? '<h3 style="color:var(--mute);font-size:14px;margin-top:20px">お断り・キャンセル</h3>' + old.map(function(b){ return bookingCard(b, ''); }).join('') : '');
+  renderCal();
 
-  $('closeList').innerHTML = data.closures.length ? data.closures.map(function(c){
+  var futureClosures = data.closures.filter(function(c){ return c.date >= data.today; });
+  $('closeList').innerHTML = futureClosures.length ? futureClosures.map(function(c){
     return '<div class="card"><div class="dt">' + esc(c.dateJa) + ' ' + esc(c.slotJa) + '</div>' +
       '<div class="meta">' + (c.conflict ? '<span class="tag warn">予約と重なっています</span>' : '') + esc(c.reason) + '／' + esc(c.source) + '／登録 ' + esc(c.created) + '</div>' +
       '<div class="acts"><button class="btn sm" data-a="unclose" data-id="' + esc(c.id) + '">停止を解除</button></div></div>';
@@ -200,6 +230,102 @@ function renderAll(){
 }
 
 function busy(btn, on){ if (btn) btn.disabled = on; }
+/* ---------- 予約カレンダー ---------- */
+var WEEK = ['日','月','火','水','木','金','土'];
+var cal = { months: [], mi: -1, sel: '' };
+function pad(n){ return (n < 10 ? '0' : '') + n; }
+function dowOf(d){ var a = d.split('-'); return new Date(Date.UTC(+a[0], a[1] - 1, +a[2])).getUTCDay(); }
+function slotShort(sl){ return sl === 'AM' ? '10時' : '17時'; }
+function slotLong(sl){ return sl === 'AM' ? '10:00〜15:00' : '17:00〜22:00'; }
+function fmtJa(d){ var a = d.split('-'); return (+a[0]) + '年' + (+a[1]) + '月' + (+a[2]) + '日（' + WEEK[dowOf(d)] + '）'; }
+
+function renderCal(){
+  var perf = {};
+  (data.perfDays || []).forEach(function(x){ perf[x.d] = x; });
+  var act = {};
+  data.bookings.forEach(function(b){ if (b.status === '確定' || b.status === '承認待ち') act[b.date + '|' + b.slot] = b; });
+  var clo = {};
+  data.closures.forEach(function(c){
+    (c.slot === '終日' ? ['AM','PM'] : [c.slot]).forEach(function(sl){ (clo[c.date + '|' + sl] = clo[c.date + '|' + sl] || []).push(c); });
+  });
+  // 表示する月：2か月前〜受付開始前の日程の月まで
+  var ms = [], keys = {};
+  (data.perfDays || []).forEach(function(x){ var k = x.d.slice(0, 7); if (!keys[k]) { keys[k] = 1; ms.push(k); } });
+  data.bookings.forEach(function(b){ var k = b.date.slice(0, 7); if (!keys[k]) { keys[k] = 1; ms.push(k); } });
+  ms.sort();
+  cal.months = ms;
+  if (cal.mi < 0) cal.mi = Math.max(0, ms.indexOf(data.today.slice(0, 7)));
+  cal.mi = Math.min(cal.mi, ms.length - 1);
+  var key = ms[cal.mi];
+  $('calPrev').disabled = cal.mi <= 0;
+  $('calNext').disabled = cal.mi >= ms.length - 1;
+  if (!key) { $('cal').innerHTML = ''; return; }
+  var y = +key.slice(0, 4), m = +key.slice(5, 7);
+  $('calLabel').textContent = y + '年' + m + '月';
+  var first = dowOf(key + '-01');
+  var days = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  var h = WEEK.map(function(w, i){ return '<div class="wh s' + i + '">' + w + '</div>'; }).join('');
+  for (var i = 0; i < first; i++) h += '<div class="cell blank"></div>';
+  for (var d = 1; d <= days; d++) {
+    var ds = key + '-' + pad(d), w = (first + d - 1) % 7, p = perf[ds];
+    var hasAny = act[ds + '|AM'] || act[ds + '|PM'] || clo[ds + '|AM'] || clo[ds + '|PM'];
+    var cls = 'cell' + (p || hasAny ? '' : ' off') + (ds === data.today ? ' today' : '');
+    var c = '<div class="' + cls + '"><span class="n ' + (p && p.h ? 'hol' : 's' + w) + '">' + d + '</span>' + (p && p.h ? '<span class="hn">' + esc(p.h) + '</span>' : '');
+    ['AM','PM'].forEach(function(sl){
+      var k = ds + '|' + sl, b = act[k], cl = clo[k];
+      var selc = cal.sel === k ? ' sel' : '';
+      var hh = sl === 'AM' ? '10' : '17';
+      function chip(cls, long, short){ return '<button class="chip ' + cls + selc + '" data-cal="' + k + '"><span class="lt">' + slotShort(sl) + ' ' + long + '</span><span class="st">' + hh + ' ' + short + '</span></button>'; }
+      if (b) c += chip(b.status === '確定' ? 'o' : 'p', esc(b.name), b.status === '確定' ? '確' : '待');
+      else if (cl) c += chip('c', '停止', '停');
+      else if (p) c += chip('e', '空き', '空');
+    });
+    h += c + '</div>';
+  }
+  $('cal').innerHTML = h;
+  renderCalDetail(act, clo);
+}
+
+function renderCalDetail(act, clo){
+  var k = cal.sel;
+  if (!k) { $('calDetail').innerHTML = ''; return; }
+  var ds = k.split('|')[0], sl = k.split('|')[1];
+  var b = act[k], cl = clo[k] || [], h = '';
+  if (b) {
+    h += bookingCard(b, '<div class="acts">' +
+      (b.status === '承認待ち' ? '<button class="btn sm ok" data-a="approve" data-id="' + esc(b.id) + '">承認して確定メールを送る</button><button class="btn sm ng" data-a="reject" data-id="' + esc(b.id) + '">お断りする</button>' : '') +
+      '<button class="btn sm ng" data-a="cancel" data-id="' + esc(b.id) + '">キャンセルにする</button></div>');
+  }
+  cl.forEach(function(c){
+    h += '<div class="card"><div class="dt">' + esc(c.dateJa) + ' ' + esc(c.slotJa) + '　受付停止</div><div class="meta">' + esc(c.reason) + '／' + esc(c.source) + '／登録 ' + esc(c.created) + '</div>' +
+      '<div class="acts"><button class="btn sm" data-a="unclose" data-id="' + esc(c.id) + '">停止を解除</button></div></div>';
+  });
+  if (!b && !cl.length) {
+    h += '<div class="card"><div class="dt">' + esc(fmtJa(ds)) + ' ' + slotLong(sl) + '　空き</div>' +
+      '<div class="meta">' + (ds < data.first ? '受付終了（30日前を過ぎています）' : ds > data.last ? '受付開始前' : 'Webで受付中') + '</div>' +
+      '<div class="acts"><button class="btn sm" data-go="close" data-d="' + ds + '" data-s="' + sl + '">この枠を受付停止にする</button>' +
+      '<button class="btn sm" data-go="manual" data-d="' + ds + '" data-s="' + sl + '">この枠に予約を手動登録</button></div></div>';
+  }
+  $('calDetail').innerHTML = h;
+}
+
+$('calPrev').onclick = function(){ if (cal.mi > 0) { cal.mi--; cal.sel = ''; renderCal(); } };
+$('calNext').onclick = function(){ if (cal.mi < cal.months.length - 1) { cal.mi++; cal.sel = ''; renderCal(); } };
+$('cal').onclick = function(e){
+  var c = e.target.closest('[data-cal]'); if (!c) return;
+  cal.sel = c.getAttribute('data-cal');
+  renderCal();
+  $('calDetail').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+};
+$('calDetail').addEventListener('click', function(e){
+  var g = e.target.closest('[data-go]'); if (!g) return;
+  var to = g.getAttribute('data-go'), d = g.getAttribute('data-d'), s = g.getAttribute('data-s');
+  if (to === 'close') { $('c_date').value = d; $('c_slot').value = s; }
+  else { $('m_date').value = d; $('m_slot').value = s; }
+  document.querySelector('#tabs [data-t="' + to + '"]').click();
+  window.scrollTo(0, 0);
+});
+
 document.addEventListener('click', function(e){
   var b = e.target.closest('button[data-a]'); if (!b) return;
   var a = b.getAttribute('data-a'), id = b.getAttribute('data-id');
